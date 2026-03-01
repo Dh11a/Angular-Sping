@@ -6,12 +6,23 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build Backend JAR with Maven
+        run: mvn clean package -DskipTests
+        working-directory: ./springboot/app
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -19,20 +30,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Spring Boot image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/springboot:latest ./springboot/app
+      - name: Build and Push Spring Boot image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/springboot:latest ./springboot/app
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/springboot:latest
 
-      - name: Build Angular image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest ./angular-app
+      - name: Build and Push Angular image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest ./angular-app
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest
 
-      - name: Push Spring Boot image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/springboot:latest
+      - name: Run docker-compose
+        run: docker-compose up -d
 
-      - name: Push Angular image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest
-
-      - name: Run docker compose
-        run: docker compose up -d
-
-      - name: Check containers
+      - name: Check containers status
         run: docker ps
