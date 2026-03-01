@@ -40,8 +40,8 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest ./angular-app
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest
 
-      - name: Run docker-compose
-        run: docker-compose up -d
+      - name: Run docker compose
+        run: docker compose up -d
 
       - name: Check containers status
         run: docker ps
